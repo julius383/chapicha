@@ -4,7 +4,7 @@ A semi-automated image editing tool
 
 ## Installation 
 
-Install my-project with npm
+Install chapicha from source
 
 ```bash 
   git clone https://github.com/julius383/chapicha

@@ -4,7 +4,8 @@ version = "0.1.0"
 description = "A semi-automated image editing tool"
 authors = ["Julius Kibunjia <kibunjiajulius@gmail.com>"]
 license = "MIT"
-repository = "https://github.com/julius383/chapicha"
+repository = "https://github.com/julius383/chapicha.git"
+homepage =  "https://github.com/julius383/chapicha"
 readme = "README.md"
 
 [tool.poetry.dependencies]
