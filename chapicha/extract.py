@@ -3,12 +3,13 @@ import pprint
 import sys
 from operator import itemgetter
 
-#  from typing import Optional
 
 import cv2 as cv
 import numpy as np
-from util import TextShade, TextFlow, GroupDict
 import pytesseract
+
+
+from chapicha.util import TextShade, TextFlow, GroupDict
 
 
 # FIXME: FInd a bettern way to detect text in image

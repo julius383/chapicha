@@ -3,10 +3,12 @@ from typing import List
 import re
 
 import click
-import transform
-import extract
 import cv2 as cv
-from util import saveImage
+
+from chapicha.util import saveImage
+import chapicha.transform
+import chapicha.extract
+
 
 @click.group()
 @click.pass_context
@@ -66,3 +68,7 @@ def ocr(ctx, out_file, files):
         for i in result:
             print(i)
     print("\n")
+
+
+def main():
+    cli(obj={})
