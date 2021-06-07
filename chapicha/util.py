@@ -2,6 +2,9 @@ from enum import Enum
 from pathlib import Path
 from datetime import datetime
 import cv2 as cv
+from rich.console import Console
+
+console = Console(color_system="truecolor")
 
 
 class TextShade(Enum):
@@ -71,3 +74,11 @@ def saveImage(image, base="out.jpg", prefix=getTimestamp()):
         cv.imwrite(outfile, image)
         return outfile
     return ""
+
+
+def print_color(arr):
+    color = f"rgb({int(arr[0])},{int(arr[1])},{int(arr[2])})"
+    console.print(
+        "\u2588" * 5 + f"rgb({int(arr[0])},{int(arr[1])},{int(arr[2])})",
+        style=color,
+    )

@@ -9,7 +9,7 @@ import numpy as np
 import pytesseract
 
 
-from chapicha.util import TextShade, TextFlow, GroupDict
+from chapicha.util import TextShade, TextFlow, GroupDict, print_color
 
 
 # FIXME: FInd a bettern way to detect text in image
@@ -114,13 +114,34 @@ def extractText(
     return list(reversed(text))
 
 
-if __name__ == "__main__":
-    print = pprint.pprint
-    img = cv.imread(sys.argv[1])
-    print(extractText(img))
-    #  contours = findTextRegions(img, TextShade.DARK)
-    #  merged = mergeBoundingBoxes(img, contours)
-    #  showTextRegions(img, merged)
-    #  boundingBoxes = [cv.boundingRect(c) for c in contours]
-    #  d = GroupDict(filterDivergent(boundingBoxes))
-    #  showGrouped(img, d)
+def sort_split(arr):
+    _, _, cols = img.shape
+    max_channel = 0
+    max_diff = -1
+    for c in range(cols):
+        diff = np.ptp(img[:, :, c])
+        if diff > max_diff:
+            max_diff = diff
+            max_channel = c
+    sorted_arr = np.einsum(
+        "iijk->ijk", arr[:, arr[:, :, max_channel].argsort()]
+    )
+    return np.array_split(sorted_arr, 2, axis=1)
+
+
+# FIXME: Uses too much memory on large images
+def medianCut(img, colors=4):
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    buckets = [img]
+    while len(buckets) < colors:
+        new_buckets = []
+        for b in buckets:
+            new_buckets.extend(sort_split(b))
+        buckets = new_buckets
+    result = []
+    for b in buckets:
+        w, h, cols = b.shape
+        color = np.reshape(b, (w * h, 1, cols))
+        avg = np.rint(np.average(color, axis=0))
+        result.append(np.reshape(avg, (3, 1)))
+    return result
