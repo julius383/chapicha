@@ -1,6 +1,4 @@
 import itertools
-import pprint
-import sys
 from operator import itemgetter
 
 
@@ -9,7 +7,11 @@ import numpy as np
 import pytesseract
 
 
-from chapicha.util import TextShade, TextFlow, GroupDict, print_color
+from chapicha.util import TextShade, TextFlow, GroupDict
+from chapicha.transform import scale
+
+
+MAX_AREA = 1000000
 
 
 # FIXME: FInd a bettern way to detect text in image
@@ -57,20 +59,8 @@ def showGrouped(img, grouped):
     cv.destroyAllWindows()
 
 
-# TODO: Implement color extraction function
-
-
-def range_key(val, increment=10):
-    if val < 0:
-        return 0
-    else:
-        xs = itertools.dropwhile(
-            lambda x: x < val, itertools.count(0, increment)
-        )
-        return list(xs)[0]
-
-
 def filterDivergent(iterable, factor=0.9):
+    """Filter out bounding boxes that are unlikely to contain text."""
     avg = sum([x[2] * x[3] for x in iterable]) / len(iterable)
 
     def filterfunc(val):
@@ -81,6 +71,7 @@ def filterDivergent(iterable, factor=0.9):
 
 
 def mergeBoundingBoxes(img, contours, flow=TextFlow.HORIZONTAL):
+    """Reduce the number of bounding boxes by merging adjacent ones."""
     CLOSENESS = 20
     boundingBoxes = [cv.boundingRect(c) for c in contours]
     grouped = GroupDict(filterDivergent(boundingBoxes), CLOSENESS)
@@ -97,7 +88,7 @@ def mergeBoundingBoxes(img, contours, flow=TextFlow.HORIZONTAL):
     return merged
 
 
-def extractText(
+def extract_text(
     img, text_color=TextShade.LIGHT, text_flow=TextFlow.HORIZONTAL
 ):
     contours = findTextRegions(img, TextShade.DARK)
@@ -115,23 +106,29 @@ def extractText(
 
 
 def sort_split(arr):
-    _, _, cols = img.shape
+    """Auxiliary function for median_cut that sorts and splits buckets."""
+    _, _, cols = arr.shape
     max_channel = 0
     max_diff = -1
     for c in range(cols):
-        diff = np.ptp(img[:, :, c])
+        diff = np.ptp(arr[:, :, c])
         if diff > max_diff:
             max_diff = diff
             max_channel = c
+    # sort 3D array with 'key' being max_channel
     sorted_arr = np.einsum(
         "iijk->ijk", arr[:, arr[:, :, max_channel].argsort()]
     )
     return np.array_split(sorted_arr, 2, axis=1)
 
 
-# FIXME: Uses too much memory on large images
-def medianCut(img, colors=4):
+def median_cut(img, colors=4):
+    """MedianCut algorithm uses average for bucket aggregation."""
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    w, h, _ = img.shape
+    if (area := w * h) >= MAX_AREA:  # arbitrary value to trigger image resize
+        factor = area // MAX_AREA
+        img = scale(img, factor=factor)
     buckets = [img]
     while len(buckets) < colors:
         new_buckets = []

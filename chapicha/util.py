@@ -3,6 +3,8 @@ from pathlib import Path
 from datetime import datetime
 import cv2 as cv
 from rich.console import Console
+import numpy as np
+from typing import List, Tuple, Optional
 
 console = Console(color_system="truecolor")
 
@@ -63,11 +65,11 @@ class GroupDict(dict):
         return self._dict.items()
 
 
-def getTimestamp():
+def get_timestamp():
     return int(datetime.utcnow().timestamp())
 
 
-def saveImage(image, base="out.jpg", prefix=getTimestamp()):
+def save_image(image, base="out.jpg", prefix=get_timestamp()):
     if image is not None:
         path = Path(base)
         outfile = f"{path.stem}{'-' if prefix else ''}{prefix}{path.suffix}"
@@ -76,9 +78,23 @@ def saveImage(image, base="out.jpg", prefix=getTimestamp()):
     return ""
 
 
-def print_color(arr):
+def print_color(arr: np.ndarray) -> None:
     color = f"rgb({int(arr[0])},{int(arr[1])},{int(arr[2])})"
     console.print(
-        "\u2588" * 5 + f"rgb({int(arr[0])},{int(arr[1])},{int(arr[2])})",
+        "\u2588" * 5 + f" rgb({int(arr[0])},{int(arr[1])},{int(arr[2])})",
         style=color,
     )
+    return
+
+
+def separate_files(files: List[Path]) -> Tuple[List[Path], Optional[Path]]:
+    maybe_input = files[:-1]
+    maybe_output = files[-1]
+    for f in maybe_input:
+        if not f.exists():
+            raise FileNotFoundError(f"{f} could not be found")
+    else:
+        if not maybe_output.exists():
+            return (maybe_input, maybe_output)
+        else:
+            return (maybe_input + [maybe_output], None)

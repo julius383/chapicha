@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "chapicha"
-version = "0.1.1"
+version = "0.1.2"
 description = "A semi-automated image editing tool"
 authors = ["Julius Kibunjia <kibunjiajulius@gmail.com>"]
 license = "MIT"
@@ -15,6 +15,7 @@ numpy = "^1.20.2"
 opencv-python = "^4.5.1"
 rich = "^10.1.0"
 pytesseract = "^0.3.7"
+PyQt5 = "^5.15.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
