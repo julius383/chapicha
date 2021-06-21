@@ -101,9 +101,10 @@ def ocr(ctx, out_file, files):
 @click.option("-c", "--count", required=True)
 @click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
 def color(ctx, count, files):
+    """Find the most dominant colors in image"""
     for file in files:
         img = cv.imread(file)
-        colors = extract.median_cut(img)
+        colors = extract.median_cut(img, count)
         print(file)
         for i in colors:
             print_color(i)
