@@ -1,10 +1,13 @@
 from enum import Enum
 from pathlib import Path
 from datetime import datetime
+import re
+from typing import List, Tuple, Optional
+from itertools import repeat
+
 import cv2 as cv
 from rich.console import Console
 import numpy as np
-from typing import List, Tuple, Optional
 
 console = Console(color_system="truecolor")
 
@@ -19,7 +22,17 @@ class TextFlow(Enum):
     VERTICAL = 2
 
 
+class MergeStrategy(Enum):
+    NAIVE = 1
+    INTELLIGENT = 2
+
+
 class GroupDict(dict):
+    """Custom dictionary that uses a user specified function to compute the
+    key of values. The default function requires values to be iterables of
+    a length of at least 2. increment is the distance between which values
+    would hash to the same key.
+    """
     def __init__(self, iterable, increment=20, key=lambda x: x[1] + x[3]):
         self._dict = {}
         self.increment = increment
@@ -70,6 +83,7 @@ def get_timestamp():
 
 
 def save_image(image, base="out.jpg", prefix=get_timestamp()):
+    """Write image to file using opencv to guess the correct format"""
     if image is not None:
         path = Path(base)
         outfile = f"{path.stem}{'-' if prefix else ''}{prefix}{path.suffix}"
@@ -97,4 +111,18 @@ def separate_files(files: List[Path]) -> Tuple[List[Path], Optional[Path]]:
         if not maybe_output.exists():
             return (maybe_input, maybe_output)
         else:
-            return (maybe_input + [maybe_output], None)
+            return (list(maybe_input) + [maybe_output], None)
+
+
+def hex2rgb(hex_str):
+    """Convert hex string to R, G, tuple"""
+    h = re.compile(r"#?([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})")
+    m = re.fullmatch(h, hex_str)
+    def to_int(x): return int(x, 16)
+    if m:
+        colors = m.groups()
+        if len(colors) == 3:
+            return tuple(map(to_int, colors))
+        elif len(colors) == 1:
+            return tuple(map(to_int, repeat(colors[0], 3)))
+    raise ValueError(f"Invalid string passed for hex color {hex_str}")

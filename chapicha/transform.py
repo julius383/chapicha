@@ -1,3 +1,6 @@
+from math import floor, ceil
+from itertools import repeat
+
 import numpy as np
 import cv2 as cv
 
@@ -10,10 +13,11 @@ def crop(
     if width == height == 0:
         return img
     if (x + width <= image_width) and (y + height <= image_height):
-        return img[y:y+height, x:x+width, :].copy()
+        return img[y : y + height, x : x + width, :].copy()
 
 
 # TODO: Implement stitch function
+
 
 def scale(img: np.ndarray, factor=None, width=None, height=None) -> np.ndarray:
     if factor is not None and factor <= 0:
@@ -30,3 +34,34 @@ def scale(img: np.ndarray, factor=None, width=None, height=None) -> np.ndarray:
         dimensions = int(image_width // factor), int(image_height // factor)
     scaled = cv.resize(img, dimensions, interpolation=cv.INTER_CUBIC)
     return scaled
+
+
+# TODO: validate input width and height greater than image width and height
+def pad(img, color=(0, 0, 0), aspect_ratio=None, width=None, height=None):
+    (image_height, image_width, depth) = img.shape
+    color = tuple(reversed(color))
+
+    # https://stackoverflow.com/a/53737420
+    trans_mask = img[:, :, 3] == 0
+    img[trans_mask] = [*color, 255]
+    img = cv.cvtColor(img, cv.COLOR_BGRA2BGR)
+
+    width_padding = (0, 0)
+    height_padding = (0, 0)
+    if width is not None:
+        padding = (width - image_width) / 2
+        print(padding, image_width, width)
+        width_padding = (floor(padding), ceil(padding))
+    if height is not None:
+        padding = (height - image_height) / 2
+        height_padding = (floor(padding), ceil(padding))
+    layers = []
+    for i in range(depth - 1):
+        arr = np.pad(
+            img[:, :, i],
+            (height_padding, width_padding),
+            "constant",
+            constant_values=color[i],
+        )
+        layers.append(arr)
+    return np.dstack(tuple(layers))
