@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "chapicha"
-version = "0.2.1"
+version = "0.3.0"
 description = "A semi-automated image editing tool"
 authors = ["Julius Kibunjia <kibunjiajulius@gmail.com>"]
 license = "MIT"
