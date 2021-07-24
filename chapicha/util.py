@@ -5,7 +5,7 @@ import re
 from typing import List, Tuple, Optional
 from itertools import repeat
 
-import cv2 as cv
+import cv2
 from rich.console import Console
 import numpy as np
 
@@ -82,12 +82,23 @@ def get_timestamp():
     return int(datetime.utcnow().timestamp())
 
 
+def read_image(path):
+    """Read an image from a path including alpha channel if present"""
+    if isinstance(path, Path):
+        path = str(path)
+    img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+    if img.shape[-1] > 3:
+        return img
+    else:
+        return cv2.imread(path, cv2.IMREAD_COLOR)
+
+
 def save_image(image, base="out.jpg", prefix=get_timestamp()):
     """Write image to file using opencv to guess the correct format"""
     if image is not None:
         path = Path(base)
         outfile = f"{path.stem}{'-' if prefix else ''}{prefix}{path.suffix}"
-        cv.imwrite(outfile, image)
+        cv2.imwrite(outfile, image)
         return outfile
     return ""
 

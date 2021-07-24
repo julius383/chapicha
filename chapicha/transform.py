@@ -1,8 +1,7 @@
 from math import floor, ceil
-from itertools import repeat
 
 import numpy as np
-import cv2 as cv
+import cv2
 
 
 def crop(
@@ -13,7 +12,7 @@ def crop(
     if width == height == 0:
         return img
     if (x + width <= image_width) and (y + height <= image_height):
-        return img[y : y + height, x : x + width, :].copy()
+        return img[y: y + height, x : x + width, :].copy()
 
 
 # TODO: Implement stitch function
@@ -32,7 +31,7 @@ def scale(img: np.ndarray, factor=None, width=None, height=None) -> np.ndarray:
             dimensions = (width, int(height * factor))
     else:
         dimensions = int(image_width // factor), int(image_height // factor)
-    scaled = cv.resize(img, dimensions, interpolation=cv.INTER_CUBIC)
+    scaled = cv2.resize(img, dimensions, interpolation=cv2.INTER_CUBIC)
     return scaled
 
 
@@ -42,10 +41,12 @@ def pad(img, color=(0, 0, 0), aspect_ratio=None, width=None, height=None):
     color = tuple(reversed(color))
 
     # https://stackoverflow.com/a/53737420
-    trans_mask = img[:, :, 3] == 0
-    img[trans_mask] = [*color, 255]
-    img = cv.cvtColor(img, cv.COLOR_BGRA2BGR)
-
+    # fill transparent areas with chosen color
+    print(depth)
+    if depth > 3:
+        trans_mask = img[:, :, 3] == 0
+        img[trans_mask] = [*color, 255]
+        img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
     width_padding = (0, 0)
     height_padding = (0, 0)
     if width is not None:
@@ -55,13 +56,15 @@ def pad(img, color=(0, 0, 0), aspect_ratio=None, width=None, height=None):
     if height is not None:
         padding = (height - image_height) / 2
         height_padding = (floor(padding), ceil(padding))
-    layers = []
-    for i in range(depth - 1):
-        arr = np.pad(
-            img[:, :, i],
-            (height_padding, width_padding),
-            "constant",
-            constant_values=color[i],
-        )
-        layers.append(arr)
-    return np.dstack(tuple(layers))
+    if color is None:
+        layers = []
+        for i in range(depth):
+            arr = np.pad(
+                img[:, :, i],
+                (height_padding, width_padding),
+                "constant",
+                constant_values=color[i])
+            layers.append(arr)
+        return np.dstack(tuple(layers))
+    else:
+        return np.pad(img, (height_padding, width_padding, (0, 0)), 'edge')
